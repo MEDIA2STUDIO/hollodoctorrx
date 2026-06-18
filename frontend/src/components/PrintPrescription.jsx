@@ -1,0 +1,131 @@
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { getPrescription } from '../utils/api'
+import { useAuth } from '../context/AuthContext'
+
+export default function PrintPrescription() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [rx, setRx] = useState(null)
+  const printRef = useRef()
+
+  useEffect(() => {
+    getPrescription(id).then(setRx).catch(() => navigate('/'))
+  }, [id])
+
+  useEffect(() => {
+    if (rx) setTimeout(() => window.print(), 300)
+  }, [rx])
+
+  if (!rx) return null
+
+  return (
+    <div className="print-container" ref={printRef}>
+      <div className="print-header">
+        <div>
+          <h1>Hello Doctor</h1>
+          {user?.hospitalName && <p className="print-hospital">{user.hospitalName}</p>}
+          <p className="print-doctor">Dr. {user?.name}</p>
+          {user?.specialization && <p className="print-spec">{user.specialization}</p>}
+          {user?.regNo && <p className="print-spec">Reg No: {user.regNo}</p>}
+        </div>
+        <div className="print-date">
+          <p>Date: {new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p>Rx #: {rx.id}</p>
+        </div>
+      </div>
+
+      <div className="print-divider"></div>
+
+      <div className="print-patient">
+        <div className="print-field">
+          <span className="print-label">Patient Name:</span>
+          <span className="print-value">{rx.patientName}</span>
+        </div>
+        <div className="print-field">
+          <span className="print-label">Age:</span>
+          <span className="print-value">{rx.patientAge}</span>
+        </div>
+        <div className="print-field">
+          <span className="print-label">Reg No.:</span>
+          <span className="print-value">{rx.patientRegNo || '-'}</span>
+        </div>
+      </div>
+
+      <div className="print-field">
+        <span className="print-label">Diagnosis:</span>
+        <span className="print-value">{rx.diagnosis}</span>
+      </div>
+
+      <div className="print-section-title">Prescribed Medicines</div>
+      <table className="print-meds-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Medicine</th>
+            <th>Dosage</th>
+            <th>Frequency</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rx.medicines.map((m, i) => (
+            <tr key={i}>
+              <td>{i + 1}</td>
+              <td>{m.name}</td>
+              <td>{m.dosage}</td>
+              <td>{m.frequency}</td>
+              <td>{m.duration}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {rx.notes && (
+        <div className="print-field">
+          <span className="print-label">Notes:</span>
+          <span className="print-value">{rx.notes}</span>
+        </div>
+      )}
+
+      {rx.followUpDate && (
+        <div className="print-field">
+          <span className="print-label">Follow-up Date:</span>
+          <span className="print-value">{new Date(rx.followUpDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        </div>
+      )}
+
+      {rx.attachments?.length > 0 && (
+        <div className="print-files">
+          <div className="print-section-title">Attachments</div>
+          {rx.attachments.map(f => (
+            <div key={f.id} className="print-file-item">{f.name}</div>
+          ))}
+        </div>
+      )}
+
+      <div className="print-divider"></div>
+
+      <div className="print-signature">
+        {rx.signature ? (
+          <img src={rx.signature} alt="Doctor's Signature" className="print-signature-img" />
+        ) : (
+          <>
+            <div className="print-signature-line"></div>
+            <p>Doctor's Signature</p>
+          </>
+        )}
+      </div>
+
+      <div className="no-print">
+        <button className="btn btn-primary" onClick={() => window.print()} style={{ width: 'auto', marginTop: '2rem' }}>
+          Print
+        </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ width: 'auto', marginTop: '2rem', marginLeft: '1rem' }}>
+          Back
+        </button>
+      </div>
+    </div>
+  )
+}
