@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { initDb } = require('./db');
 const authRoutes = require('./routes/auth');
 const prescriptionRoutes = require('./routes/prescriptions');
@@ -22,6 +23,12 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
+
+const frontendPath = path.join(__dirname, '..', 'frontend', 'dist');
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+  app.get('*', (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
+}
 
 initDb().then(() => {
   app.listen(PORT, () => {
