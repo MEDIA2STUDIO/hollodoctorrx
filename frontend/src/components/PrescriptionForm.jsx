@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createPrescription, updatePrescription, getPrescription, uploadFile, deleteFile, getMedicines } from '../utils/api'
+import { createPrescription, updatePrescription, getPrescription, uploadFile, deleteFile, getMedicines, getDriveAuthUrl, getDriveStatus, uploadToDrive } from '../utils/api'
 import SignaturePad from './SignaturePad'
 
-const emptyMedicine = { name: '', dosage: '', frequency: '', duration: '' }
+const TIMES = ['Morning', 'Afternoon', 'Night']
+const emptyMedicine = { name: '', times: [] }
 
 export default function PrescriptionForm() {
   const { id } = useParams()
@@ -24,9 +25,11 @@ export default function PrescriptionForm() {
   const [uploading, setUploading] = useState(false)
   const [medList, setMedList] = useState([])
   const [error, setError] = useState('')
+  const [driveConnected, setDriveConnected] = useState(false)
 
   useEffect(() => {
     getMedicines().then(setMedList).catch(() => {})
+    getDriveStatus().then(s => setDriveConnected(s.connected)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -57,12 +60,19 @@ export default function PrescriptionForm() {
   const handleMedicineChange = (index, field, value) => {
     const medicines = [...form.medicines]
     medicines[index] = { ...medicines[index], [field]: value }
-    if (field === 'name') {
-      const match = medList.find(m => m.name.toLowerCase() === value.toLowerCase())
-      if (match && match.dosageForm && !medicines[index].dosage) {
-        medicines[index].dosage = match.dosageForm
-      }
+    setForm({ ...form, medicines })
+  }
+
+  const toggleTime = (index, time) => {
+    const medicines = [...form.medicines]
+    const med = { ...medicines[index] }
+    const times = med.times || []
+    if (times.includes(time)) {
+      med.times = times.filter(t => t !== time)
+    } else {
+      med.times = [...times, time]
     }
+    medicines[index] = med
     setForm({ ...form, medicines })
   }
 
@@ -104,6 +114,34 @@ export default function PrescriptionForm() {
     try {
       const result = await deleteFile(id, fileId)
       setAttachments(result.attachments)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleDriveUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1]
+        await uploadToDrive(file.name, base64, file.type)
+        alert('File uploaded to Google Drive!')
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      setError(err.message)
+    }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  const connectDrive = async () => {
+    try {
+      const { url } = await getDriveAuthUrl()
+      window.open(url, '_blank')
     } catch (err) {
       setError(err.message)
     }
@@ -167,6 +205,7 @@ export default function PrescriptionForm() {
               onChange={e => handleMedicineChange(i, 'name', e.target.value)}
               list={id ? undefined : 'med-list'}
               required
+              style={{ flex: 2 }}
             />
             {!id && (
               <datalist id="med-list">
@@ -175,9 +214,21 @@ export default function PrescriptionForm() {
                 ))}
               </datalist>
             )}
-            <input placeholder="Dosage" value={med.dosage} onChange={e => handleMedicineChange(i, 'dosage', e.target.value)} required />
-            <input placeholder="Frequency" value={med.frequency} onChange={e => handleMedicineChange(i, 'frequency', e.target.value)} required />
-            <input placeholder="Duration" value={med.duration} onChange={e => handleMedicineChange(i, 'duration', e.target.value)} required />
+            <div className="time-buttons">
+              {TIMES.map(t => {
+                const active = (med.times || []).includes(t)
+                return (
+                  <button
+                    type="button"
+                    key={t}
+                    className={`time-btn ${active ? 'active' : ''}`}
+                    onClick={() => toggleTime(i, t)}
+                  >
+                    {t === 'Morning' ? '🌅' : t === 'Afternoon' ? '☀️' : '🌙'} {t}
+                  </button>
+                )
+              })}
+            </div>
             <button type="button" className="btn btn-danger btn-sm" onClick={() => removeMedicine(i)} style={{ padding: '0.4rem' }}>X</button>
           </div>
         ))}
@@ -219,6 +270,25 @@ export default function PrescriptionForm() {
             {uploading ? 'Uploading...' : '+ Upload File'}
           </label>
           <span className="file-hint">JPG, PNG, PDF, DOC (max 10MB)</span>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Google Drive Backup</label>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {!driveConnected ? (
+            <button type="button" className="btn btn-sm" style={{ background: '#4285F4', color: 'white' }} onClick={connectDrive}>
+              Connect Google Drive
+            </button>
+          ) : (
+            <>
+              <span style={{ color: '#27ae60', fontSize: '0.9rem' }}>✓ Drive connected</span>
+              <input type="file" id="drive-upload" onChange={handleDriveUpload} disabled={uploading} />
+              <label htmlFor="drive-upload" className="btn btn-sm" style={{ background: '#4285F4', color: 'white', cursor: 'pointer' }}>
+                {uploading ? 'Uploading...' : 'Upload to Drive'}
+              </label>
+            </>
+          )}
         </div>
       </div>
 

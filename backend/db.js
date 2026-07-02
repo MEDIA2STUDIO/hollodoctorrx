@@ -65,6 +65,22 @@ CREATE TABLE IF NOT EXISTS activity_log (
   details TEXT DEFAULT '{}',
   "createdAt" TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  "expiresAt" TIMESTAMP NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS drive_tokens (
+  id SERIAL PRIMARY KEY,
+  "userId" INTEGER NOT NULL REFERENCES users(id),
+  "accessToken" TEXT NOT NULL,
+  "refreshToken" TEXT DEFAULT '',
+  "expiresAt" TIMESTAMP DEFAULT NOW()
+);
 `;
 
 async function initDb() {
@@ -138,6 +154,21 @@ async function initDb() {
       action TEXT NOT NULL,
       details TEXT DEFAULT '{}',
       createdAt TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (userId) REFERENCES users(id)
+    )`);
+    db.exec(`CREATE TABLE IF NOT EXISTS otp_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      code TEXT NOT NULL,
+      expiresAt TEXT NOT NULL,
+      createdAt TEXT DEFAULT (datetime('now'))
+    )`);
+    db.exec(`CREATE TABLE IF NOT EXISTS drive_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      accessToken TEXT NOT NULL,
+      refreshToken TEXT DEFAULT '',
+      expiresAt TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (userId) REFERENCES users(id)
     )`);
     migrate();

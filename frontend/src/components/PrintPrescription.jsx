@@ -96,9 +96,9 @@ export default function PrintPrescription() {
           <tr>
             <th>#</th>
             <th>Medicine</th>
-            <th>Dosage</th>
-            <th>Frequency</th>
-            <th>Duration</th>
+            <th>Morning</th>
+            <th>Afternoon</th>
+            <th>Night</th>
           </tr>
         </thead>
         <tbody>
@@ -106,9 +106,19 @@ export default function PrintPrescription() {
             <tr key={i}>
               <td>{i + 1}</td>
               <td>{m.name}</td>
-              <td>{m.dosage}</td>
-              <td>{m.frequency}</td>
-              <td>{m.duration}</td>
+              {m.times ? (
+                <>
+                  <td className={m.times.includes('Morning') ? 'time-check' : ''}>{m.times.includes('Morning') ? '✓' : '-'}</td>
+                  <td className={m.times.includes('Afternoon') ? 'time-check' : ''}>{m.times.includes('Afternoon') ? '✓' : '-'}</td>
+                  <td className={m.times.includes('Night') ? 'time-check' : ''}>{m.times.includes('Night') ? '✓' : '-'}</td>
+                </>
+              ) : (
+                <>
+                  <td>{m.dosage || '-'}</td>
+                  <td>{m.frequency || '-'}</td>
+                  <td>{m.duration || '-'}</td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>

@@ -12,8 +12,9 @@ export default function Navbar() {
           <span className="navbar-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>Hello Doctor</span>
         </div>
         <div className="navbar-actions">
-          <button className="btn btn-sm btn-outline" onClick={() => navigate('/register')}>Sign Up</button>
-          <button className="btn btn-sm btn-outline" onClick={() => navigate('/admin/login')}>Admin Login</button>
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/login')}>Sign In</button>
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/register')}>Register</button>
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/admin/login')}>Admin</button>
         </div>
       </nav>
     )

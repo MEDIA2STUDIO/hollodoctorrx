@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Login from './components/Login'
+import OtpLogin from './components/OtpLogin'
 import Register from './components/Register'
 import Dashboard from './components/Dashboard'
 import Navbar from './components/Navbar'
@@ -40,7 +41,8 @@ export default function App() {
       {!user && <Navbar />}
       <main className={(user && !isAdmin) ? 'main-content' : isAdmin ? 'admin-content' : ''}>
         <Routes>
-          <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+          <Route path="/login" element={user ? <Navigate to="/" /> : <OtpLogin />} />
+          <Route path="/login/password" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/prescriptions/new" element={<ProtectedRoute><PrescriptionForm /></ProtectedRoute>} />

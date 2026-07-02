@@ -287,10 +287,55 @@
 
 .medicine-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 40px;
+  grid-template-columns: 2fr auto 40px;
   gap: 0.5rem;
   align-items: end;
   margin-bottom: 0.5rem;
+}
+
+.time-buttons {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.time-btn {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  line-height: 1.2;
+}
+
+.time-btn:hover {
+  border-color: #667eea;
+  background: #f0f0ff;
+}
+
+.time-btn.active {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.time-check {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #27ae60;
+  font-weight: bold;
 }
 
 .add-medicine {

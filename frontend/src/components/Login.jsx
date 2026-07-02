@@ -36,6 +36,9 @@ export default function Login() {
         </div>
         <button type="submit" className="btn btn-primary">Sign In</button>
         <p className="auth-link">
+          <Link to="/login">Sign in with OTP</Link>
+        </p>
+        <p className="auth-link">
           Don't have an account? <Link to="/register">Register</Link>
         </p>
       </form>

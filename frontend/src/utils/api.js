@@ -134,3 +134,34 @@ export function getActivities(params = {}) {
 export function getUserActivities(userId) {
   return request(`/admin/activities/${userId}`);
 }
+
+// OTP Auth
+export function sendOtp(email) {
+  return request('/auth/send-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function verifyOtp(email, otp, name) {
+  return request('/auth/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp, name }),
+  });
+}
+
+// Google Drive
+export function getDriveAuthUrl() {
+  return request('/drive/auth');
+}
+
+export function getDriveStatus() {
+  return request('/drive/status');
+}
+
+export function uploadToDrive(fileName, fileData, mimeType) {
+  return request('/drive/upload', {
+    method: 'POST',
+    body: JSON.stringify({ fileName, fileData, mimeType }),
+  });
+}
