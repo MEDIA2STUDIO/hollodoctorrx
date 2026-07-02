@@ -28,9 +28,9 @@ const upload = multer({
   },
 });
 
-router.post('/:prescriptionId', auth, upload.single('file'), (req, res) => {
-  const prescription = db.prepare(
-    'SELECT * FROM prescriptions WHERE id = ? AND userId = ?'
+router.post('/:prescriptionId', auth, upload.single('file'), async (req, res) => {
+  const prescription = await db.prepare(
+    'SELECT * FROM prescriptions WHERE id = ? AND "userId" = ?'
   ).get(req.params.prescriptionId, req.user.id);
 
   if (!prescription) {
@@ -45,16 +45,16 @@ router.post('/:prescriptionId', auth, upload.single('file'), (req, res) => {
     size: req.file.size,
   });
 
-  db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
+  await db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
     .run(JSON.stringify(attachments), req.params.prescriptionId);
 
-  db.logActivity(req.user.id, req.user.name, 'upload_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: req.file.originalname });
+  await db.logActivity(req.user.id, req.user.name, 'upload_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: req.file.originalname });
   res.json({ attachments });
 });
 
-router.delete('/:prescriptionId/:fileId', auth, (req, res) => {
-  const prescription = db.prepare(
-    'SELECT * FROM prescriptions WHERE id = ? AND userId = ?'
+router.delete('/:prescriptionId/:fileId', auth, async (req, res) => {
+  const prescription = await db.prepare(
+    'SELECT * FROM prescriptions WHERE id = ? AND "userId" = ?'
   ).get(req.params.prescriptionId, req.user.id);
 
   if (!prescription) return res.status(404).json({ error: 'Prescription not found' });
@@ -69,10 +69,10 @@ router.delete('/:prescriptionId/:fileId', auth, (req, res) => {
   const filePath = path.join(__dirname, '..', 'uploads', removed.path);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-  db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
+  await db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
     .run(JSON.stringify(attachments), req.params.prescriptionId);
 
-  db.logActivity(req.user.id, req.user.name, 'delete_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: removed.name });
+  await db.logActivity(req.user.id, req.user.name, 'delete_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: removed.name });
   res.json({ attachments });
 });
 

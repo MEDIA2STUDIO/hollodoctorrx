@@ -1,3 +1,4 @@
+require('express-async-errors');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -29,6 +30,11 @@ if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
   app.get('*', (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
 }
+
+app.use((err, req, res, next) => {
+  console.error(err.stack || err.message || err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 initDb().then(() => {
   app.listen(PORT, () => {
