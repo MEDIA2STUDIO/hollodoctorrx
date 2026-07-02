@@ -7,19 +7,19 @@ const router = express.Router();
 
 const CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-const REDIRECT_URI = process.env.GOOGLE_DRIVE_REDIRECT_URI || '/api/drive/callback';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 
-function getOAuth2Client() {
-  return new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+function getOAuth2Client(redirectUri) {
+  return new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, redirectUri);
 }
 
 router.get('/auth', auth, (req, res) => {
   if (!CLIENT_ID) {
     return res.status(400).json({ error: 'Google Drive not configured. Set GOOGLE_DRIVE_CLIENT_ID and GOOGLE_DRIVE_CLIENT_SECRET.' });
   }
-  const oauth2Client = getOAuth2Client();
+  const redirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/drive/callback`;
+  const oauth2Client = getOAuth2Client(redirectUri);
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
@@ -33,7 +33,8 @@ router.get('/callback', async (req, res) => {
   if (!code || !state) return res.status(400).json({ error: 'Missing code or state' });
 
   try {
-    const oauth2Client = getOAuth2Client();
+    const redirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/drive/callback`;
+    const oauth2Client = getOAuth2Client(redirectUri);
     const { tokens } = await oauth2Client.getToken(code);
     const userId = parseInt(state);
 
