@@ -18,4 +18,11 @@ function auth(req, res, next) {
   }
 }
 
-module.exports = { auth, JWT_SECRET };
+function requireAdmin(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
+
+module.exports = { auth, requireAdmin, JWT_SECRET };

@@ -8,6 +8,7 @@ export default function PrintPrescription() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [rx, setRx] = useState(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const printRef = useRef()
 
   useEffect(() => {
@@ -17,6 +18,26 @@ export default function PrintPrescription() {
   useEffect(() => {
     if (rx) setTimeout(() => window.print(), 300)
   }, [rx])
+
+  const downloadPdf = async () => {
+    setPdfLoading(true)
+    try {
+      const html2pdf = (await import('html2pdf.js')).default
+      const element = printRef.current
+      const opt = {
+        margin: 0.5,
+        filename: `prescription-${rx.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      }
+      await html2pdf().set(opt).from(element).save()
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   if (!rx) return null
 
@@ -121,6 +142,9 @@ export default function PrintPrescription() {
       <div className="no-print">
         <button className="btn btn-primary" onClick={() => window.print()} style={{ width: 'auto', marginTop: '2rem' }}>
           Print
+        </button>
+        <button className="btn btn-success" onClick={downloadPdf} disabled={pdfLoading} style={{ width: 'auto', marginTop: '2rem', marginLeft: '1rem' }}>
+          {pdfLoading ? 'Generating...' : 'Download PDF'}
         </button>
         <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ width: 'auto', marginTop: '2rem', marginLeft: '1rem' }}>
           Back

@@ -29,6 +29,7 @@ router.post('/', auth, (req, res) => {
   ).run(req.user.id, name, category || '', manufacturer || '', description || '', sideEffects || '', dosageForm || '');
 
   const medicine = db.prepare('SELECT * FROM medicines WHERE id = ?').get(result.lastInsertRowid);
+  db.logActivity(req.user.id, req.user.name, 'create_medicine', { medicineId: result.lastInsertRowid, name });
   res.status(201).json(medicine);
 });
 
@@ -54,14 +55,17 @@ router.put('/:id', auth, (req, res) => {
   );
 
   const updated = db.prepare('SELECT * FROM medicines WHERE id = ?').get(req.params.id);
+  db.logActivity(req.user.id, req.user.name, 'edit_medicine', { medicineId: parseInt(req.params.id), name: updated.name });
   res.json(updated);
 });
 
 router.delete('/:id', auth, (req, res) => {
+  const existing = db.prepare('SELECT name FROM medicines WHERE id = ? AND userId = ?').get(req.params.id, req.user.id);
   const result = db.prepare(
     'DELETE FROM medicines WHERE id = ? AND userId = ?'
   ).run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Medicine not found' });
+  db.logActivity(req.user.id, req.user.name, 'delete_medicine', { medicineId: parseInt(req.params.id), name: existing?.name || 'Unknown' });
   res.json({ message: 'Medicine deleted' });
 });
 

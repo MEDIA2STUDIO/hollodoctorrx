@@ -16,11 +16,11 @@ router.post('/register', (req, res) => {
 
   const hashed = bcrypt.hashSync(password, 10);
   const result = db.prepare(
-    'INSERT INTO users (name, email, password, specialization, regNo, hospitalName) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(name, email, hashed, specialization || '', regNo || '', hospitalName || '');
+    'INSERT INTO users (name, email, password, specialization, regNo, hospitalName, role) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(name, email, hashed, specialization || '', regNo || '', hospitalName || '', 'doctor');
 
   const token = jwt.sign(
-    { id: result.lastInsertRowid, name, email },
+    { id: result.lastInsertRowid, name, email, role: 'doctor' },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -32,6 +32,7 @@ router.post('/register', (req, res) => {
       specialization: specialization || '',
       regNo: regNo || '',
       hospitalName: hospitalName || '',
+      role: 'doctor',
     }
   });
 });
@@ -43,7 +44,8 @@ router.post('/login', (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
-  const token = jwt.sign({ id: user.id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  db.logActivity(user.id, user.name, 'login', { email: user.email });
   res.json({
     token,
     user: {
@@ -51,14 +53,15 @@ router.post('/login', (req, res) => {
       specialization: user.specialization,
       regNo: user.regNo || '',
       hospitalName: user.hospitalName || '',
+      role: user.role || 'doctor',
     }
   });
 });
 
 router.get('/me', auth, (req, res) => {
-  const user = db.prepare('SELECT id, name, email, specialization, regNo, hospitalName FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, name, email, specialization, regNo, hospitalName, role FROM users WHERE id = ?').get(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json({ ...user, regNo: user.regNo || '', hospitalName: user.hospitalName || '' });
+  res.json({ ...user, regNo: user.regNo || '', hospitalName: user.hospitalName || '', role: user.role || 'doctor' });
 });
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, 'prescriptions.db');
 
@@ -19,6 +20,10 @@ function migrate() {
   }
   if (!userNames.includes('hospitalName')) {
     db.exec("ALTER TABLE users ADD COLUMN hospitalName TEXT DEFAULT ''");
+    saveDb();
+  }
+  if (!userNames.includes('role')) {
+    db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'doctor'");
     saveDb();
   }
   const rxCols = db.exec("PRAGMA table_info(prescriptions)");
@@ -52,6 +57,7 @@ async function initDb() {
     specialization TEXT DEFAULT '',
     regNo TEXT DEFAULT '',
     hospitalName TEXT DEFAULT '',
+    role TEXT DEFAULT 'doctor',
     createdAt TEXT DEFAULT (datetime('now'))
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS prescriptions (
@@ -81,8 +87,36 @@ async function initDb() {
     createdAt TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (userId) REFERENCES users(id)
   )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId INTEGER NOT NULL,
+    userName TEXT DEFAULT '',
+    action TEXT NOT NULL,
+    details TEXT DEFAULT '{}',
+    createdAt TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (userId) REFERENCES users(id)
+  )`);
   migrate();
+
+  const admin = prepare('SELECT id FROM users WHERE email = ?').get('admin@hellodoctor.com');
+  if (!admin) {
+    const hashed = bcrypt.hashSync('admin123', 10);
+    prepare(
+      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)'
+    ).run('Admin', 'admin@hellodoctor.com', hashed, 'admin');
+  }
+
   saveDb();
+}
+
+function logActivity(userId, userName, action, details = {}) {
+  try {
+    prepare(
+      'INSERT INTO activity_log (userId, userName, action, details) VALUES (?, ?, ?, ?)'
+    ).run(userId, userName, action, JSON.stringify(details));
+  } catch (e) {
+    console.error('Failed to log activity:', e.message);
+  }
 }
 
 function prepare(sql) {
@@ -120,4 +154,4 @@ function prepare(sql) {
   };
 }
 
-module.exports = { initDb, prepare };
+module.exports = { initDb, prepare, logActivity };

@@ -48,6 +48,7 @@ router.post('/:prescriptionId', auth, upload.single('file'), (req, res) => {
   db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
     .run(JSON.stringify(attachments), req.params.prescriptionId);
 
+  db.logActivity(req.user.id, req.user.name, 'upload_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: req.file.originalname });
   res.json({ attachments });
 });
 
@@ -71,6 +72,7 @@ router.delete('/:prescriptionId/:fileId', auth, (req, res) => {
   db.prepare('UPDATE prescriptions SET attachments = ? WHERE id = ?')
     .run(JSON.stringify(attachments), req.params.prescriptionId);
 
+  db.logActivity(req.user.id, req.user.name, 'delete_file', { prescriptionId: parseInt(req.params.prescriptionId), fileName: removed.name });
   res.json({ attachments });
 });
 

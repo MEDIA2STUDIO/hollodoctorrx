@@ -4,9 +4,12 @@ import Login from './components/Login'
 import Register from './components/Register'
 import Dashboard from './components/Dashboard'
 import Navbar from './components/Navbar'
+import AdminNavbar from './components/AdminNavbar'
 import PrescriptionForm from './components/PrescriptionForm'
 import PrintPrescription from './components/PrintPrescription'
 import Medicines from './components/Medicines'
+import AdminLogin from './components/AdminLogin'
+import AdminDashboard from './components/AdminDashboard'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -15,15 +18,27 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/login" />
 }
 
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="loading">Loading...</div>
+  if (!user) return <Navigate to="/admin/login" />
+  if (user.role !== 'admin') return <Navigate to="/" />
+  return children
+}
+
 export default function App() {
   const { user, loading } = useAuth()
 
   if (loading) return <div className="loading">Loading...</div>
 
+  const isAdmin = user?.role === 'admin'
+
   return (
     <div className="app">
-      {user && <Navbar />}
-      <main className={user ? 'main-content' : ''}>
+      {user && !isAdmin && <Navbar />}
+      {user && isAdmin && <AdminNavbar />}
+      {!user && <Navbar />}
+      <main className={(user && !isAdmin) ? 'main-content' : isAdmin ? 'admin-content' : ''}>
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
@@ -32,6 +47,8 @@ export default function App() {
           <Route path="/prescriptions/edit/:id" element={<ProtectedRoute><PrescriptionForm /></ProtectedRoute>} />
           <Route path="/prescriptions/print/:id" element={<ProtectedRoute><PrintPrescription /></ProtectedRoute>} />
           <Route path="/medicines" element={<ProtectedRoute><Medicines /></ProtectedRoute>} />
+          <Route path="/admin/login" element={user && isAdmin ? <Navigate to="/admin/dashboard" /> : <AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
       </main>
     </div>

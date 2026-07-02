@@ -39,6 +39,7 @@ router.post('/', auth, (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(req.user.id, patientName, patientAge, patientRegNo || '', diagnosis, JSON.stringify(medicines), notes || '', followUpDate || '', signature || '');
   const prescription = db.prepare('SELECT * FROM prescriptions WHERE id = ?').get(result.lastInsertRowid);
+  db.logActivity(req.user.id, req.user.name, 'create_prescription', { prescriptionId: result.lastInsertRowid, patientName });
   res.status(201).json(parse(prescription));
 });
 
@@ -63,14 +64,17 @@ router.put('/:id', auth, (req, res) => {
     req.params.id
   );
   const updated = db.prepare('SELECT * FROM prescriptions WHERE id = ?').get(req.params.id);
+  db.logActivity(req.user.id, req.user.name, 'edit_prescription', { prescriptionId: parseInt(req.params.id), patientName: updated.patientName });
   res.json(parse(updated));
 });
 
 router.delete('/:id', auth, (req, res) => {
+  const existing = db.prepare('SELECT patientName FROM prescriptions WHERE id = ? AND userId = ?').get(req.params.id, req.user.id);
   const result = db.prepare(
     'DELETE FROM prescriptions WHERE id = ? AND userId = ?'
   ).run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Prescription not found' });
+  db.logActivity(req.user.id, req.user.name, 'delete_prescription', { prescriptionId: parseInt(req.params.id), patientName: existing?.patientName || 'Unknown' });
   res.json({ message: 'Prescription deleted' });
 });
 

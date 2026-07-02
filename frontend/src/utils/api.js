@@ -114,3 +114,23 @@ export function deleteMedicine(id) {
     method: 'DELETE',
   });
 }
+
+export function adminLogin(email, password) {
+  return request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function getDoctors() {
+  return request('/admin/doctors');
+}
+
+export function getActivities(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/admin/activities${qs ? '?' + qs : ''}`);
+}
+
+export function getUserActivities(userId) {
+  return request(`/admin/activities/${userId}`);
+}

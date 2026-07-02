@@ -21,11 +21,13 @@ export function AuthProvider({ children }) {
 
   const loginUser = (token, userData) => {
     localStorage.setItem('token', token)
+    localStorage.setItem('role', userData.role || 'doctor')
     setUser(userData)
   }
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('role')
     setUser(null)
   }
 

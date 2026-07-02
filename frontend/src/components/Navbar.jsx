@@ -5,6 +5,20 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
+  if (!user) {
+    return (
+      <nav className="navbar navbar-public">
+        <div className="navbar-left">
+          <span className="navbar-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>Hello Doctor</span>
+        </div>
+        <div className="navbar-actions">
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/register')}>Sign Up</button>
+          <button className="btn btn-sm btn-outline" onClick={() => navigate('/admin/login')}>Admin Login</button>
+        </div>
+      </nav>
+    )
+  }
+
   return (
     <nav className="navbar">
       <div className="navbar-left">
