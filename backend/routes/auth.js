@@ -95,7 +95,7 @@ router.post('/send-otp', async (req, res) => {
     console.log(`[DEV] OTP for ${email}: ${otp}`);
   }
 
-  res.json({ message: 'OTP sent to your email' });
+  res.json({ message: 'OTP sent to your email', devOtp: RESEND_API_KEY ? undefined : otp });
 });
 
 router.post('/verify-otp', async (req, res) => {

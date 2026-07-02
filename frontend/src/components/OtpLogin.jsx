@@ -10,6 +10,7 @@ export default function OtpLogin() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
+  const [devOtp, setDevOtp] = useState('')
   const { loginUser } = useAuth()
 
   const handleSendOtp = async (e) => {
@@ -17,7 +18,8 @@ export default function OtpLogin() {
     setError('')
     setSending(true)
     try {
-      await sendOtp(email)
+      const data = await sendOtp(email)
+      if (data.devOtp) setDevOtp(data.devOtp)
       setStep('otp')
     } catch (err) {
       setError(err.message)
@@ -62,6 +64,7 @@ export default function OtpLogin() {
           <h2>Hello Doctor</h2>
           <p className="subtitle">Enter OTP sent to {email}</p>
           {error && <p className="error">{error}</p>}
+          {devOtp && <p className="dev-otp">Dev OTP: <strong>{devOtp}</strong></p>}
           <div className="form-group">
             <label>Full Name (for new users)</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Dr. Name" />
