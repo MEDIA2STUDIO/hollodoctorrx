@@ -19,10 +19,21 @@ export default function PrintPrescription() {
     if (rx) setTimeout(() => window.print(), 300)
   }, [rx])
 
+  const getHtml2pdf = async () => {
+    if (window.html2pdf) return window.html2pdf
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script')
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+      s.onload = resolve; s.onerror = reject
+      document.head.appendChild(s)
+    })
+    return window.html2pdf
+  }
+
   const downloadPdf = async () => {
     setPdfLoading(true)
     try {
-      const html2pdf = (await import('html2pdf.js')).default
+      const html2pdf = await getHtml2pdf()
       const element = printRef.current
       const opt = {
         margin: 0.5,
