@@ -29,8 +29,16 @@ router.get('/auth', auth, (req, res) => {
 });
 
 router.get('/callback', async (req, res) => {
-  const { code, state } = req.query;
-  if (!code || !state) return res.status(400).json({ error: 'Missing code or state' });
+  const { code, state, error: gError } = req.query;
+  console.log('Drive callback hit:', JSON.stringify(req.query));
+
+  if (gError) {
+    return res.status(400).send(`<h2>Google Drive Auth Failed</h2><p>${gError}</p><p>${req.query.error_description || ''}</p>`);
+  }
+
+  if (!code || !state) {
+    return res.status(400).send(`<h2>Missing Parameters</h2><p>Expected "code" and "state" in the URL. Received: ${JSON.stringify(Object.keys(req.query))}</p><p>Full URL: ${req.protocol}://${req.get('host')}${req.originalUrl}</p>`);
+  }
 
   try {
     const redirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/drive/callback`;
@@ -43,10 +51,10 @@ router.get('/callback', async (req, res) => {
       'INSERT INTO drive_tokens ("userId", "accessToken", "refreshToken") VALUES (?, ?, ?)'
     ).run(userId, tokens.access_token, tokens.refresh_token || '');
 
-    res.redirect('/?drive=connected');
+    res.send(`<h2>Google Drive Connected!</h2><p>You can close this tab and go back to the app.</p><script>window.opener?.postMessage('drive-connected','*');window.close()</script>`);
   } catch (err) {
     console.error('Drive OAuth error:', err.message);
-    res.status(500).json({ error: 'Failed to authenticate with Google Drive' });
+    res.status(500).send(`<h2>Error</h2><p>${err.message}</p>`);
   }
 });
 
